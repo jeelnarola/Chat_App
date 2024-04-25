@@ -1,0 +1,60 @@
+#content ul li{
+    font-size: 20px;
+}
+.chat-container{
+    width: 100%;
+    height: 400px;
+    background-color: lightblue;
+    overflow: scroll;
+
+}
+#chat-form input{
+    /* height: 50px; */
+    margin-top: 20px;
+    height: 40px;
+    /* padding: 20px 10px; */
+
+}
+#chat-form .msg{
+    padding: 10px 10px;
+    width: 70%;
+    margin-left: 20px;
+    font-size: 15px;
+    /* margin: 0px 0px 0px 10px; */
+}
+#chat-form input::placeholder{
+    font-size: 20px;
+    /* padding: 10px;    */
+}
+.chat-section{
+ display: none;   
+}
+.current-user-chat{
+    text-align: right;
+    margin: 10px;
+    color: black;
+}
+.dynemic-user-chat{
+    text-align: left;
+    margin: 10px;
+    color: black;
+}
+.offlien-status{
+    color: red;
+    padding: 18px 0px 0px 0px;
+
+}
+.Online-status{
+    font-size: 15px;
+    padding: 18px 0px 0px 0px;
+    color: rgb(4, 184, 4);
+}
+.user-list{
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid gray;
+    padding: 10px;
+    cursor: pointer;
+}

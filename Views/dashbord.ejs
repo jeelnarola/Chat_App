@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  	<title>Chats Application</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="./css/custom.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.2/socket.io.js" integrity="sha512-VJ6+sp2E5rFQk05caiXXzQd1wBABpjEj1r5kMiLmGAAgwPItw1YpqsCCBtq8Yr1x6C49/mTpRdXtq8O2RcZhlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+  <body>
+		
+		<div class="wrapper d-flex align-items-stretch">
+			<nav id="sidebar">
+				<div class="custom-menu">
+					<button type="button" id="sidebarCollapse" class="btn btn-primary">
+	          <i class="fa fa-bars"></i>
+	          <span class="sr-only">Toggle Menu</span>
+	        </button>
+        </div>
+	  		<h1><a href="index.html" class="logo">Chats</a></h1>
+        <ul class="list-unstyled components mb-5">
+          <li>
+              <a href="/dashbord"><span class="fa fa-user mr-3"></span> Dashboard</a>
+          </li>
+          <li>
+            <a href="/logout"><span class="fa fa-sign-out mr-3"></span> LogOut</a>
+          </li>
+        </ul>
+
+    	</nav>
+      
+
+        <!-- Page Content  -->
+    <h2 id="content" class="p-4 p-md-5 pt-5">hii, <%= user.Username %>
+        <div class="row">
+            <div class="col-md-4">
+                <ul class="list-group">
+                    <%
+                        if(Users.length>0){
+                            for(let i=0; i<Users.length; i++){
+                                %>
+                                <li class="list-group-item-dark user-list" data-id="<%= Users[i]['_id'] %>">
+                                    <%= Users[i]['Username'] %> 
+                                    <% 
+                                        if(Users[i]['Is_Online']==1){
+                                            %>
+                                            <sup class="Online-status" id="<%= Users[i]['_id']%>-status">Onlien</sup>
+                                            <%
+                                        }
+                                        else{
+                                            %>
+                                            <sup class="offlien-status" id="<%= Users[i]['_id']%>-status">Ofline </sup>
+                                            <%
+                                        }
+                                    %>
+                                </li>
+                                <%
+                            }
+                        }
+                    %>
+                </ul>
+            </div>
+            <div class="col-md-8">
+                <h2 class="start">click to start User</h2>
+                <div class="chat-section">
+                <div class="chat-container">
+                    
+                    
+                </div>
+                <form action="" id="chat-form">
+                    <div class="row">
+                    <input type="text" placeholder="write message" class="msg" required>
+                    <input type="submit" class="btn btn-primary" value="Send Message" >
+                    </div>
+                </form>
+            </div>
+            </div>
+        </div></h2>
+       
+    </div>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script>
+        var sender_id='<%= user._id %>'
+        let receiver_id;
+       var socket= io('/user',{
+        auth:{
+            token:'<%= user._id %>'
+        }
+       })
+
+    $(document).ready(function(){
+        $(".user-list").click(function(){
+           var id= $(this).attr("data-id")
+            receiver_id=id
+            console.log(receiver_id);
+           $('.start').hide()
+            $(".chat-section").show()
+            socket.emit('extistschat',{Sender_id:sender_id,Receiver_id:receiver_id})
+        })
+    })
+
+    socket.on('getonlienUser',function(data){
+        $('#'+data.User_id+'-status').text("Onlien")
+        $('#'+data.User_id+'-status').removeClass("offlien-status")
+        $('#'+data.User_id+'-status').addClass("Online-status")
+    })
+    socket.on('getofflienUser',function(data){
+        $('#'+data.User_id+'-status').text("Offlien")
+        $('#'+data.User_id+'-status').addClass("offlien-status")
+        $('#'+data.User_id+'-status').removeClass("Online-status")
+    })
+
+    document.getElementById("chat-form").addEventListener("submit",(e)=>{
+        e.preventDefault()
+        let obj={
+            msg:document.querySelector(".msg").value,
+            sender_id:sender_id,
+            receiver_id:receiver_id,
+        }
+
+        fetch("/saveChat",{
+            method:"POST",
+            headers:{"content-type":"application/json"},
+            body:JSON.stringify(obj)
+        })
+        .then((res)=>res.json())
+        .then((data)=>{
+            document.querySelector('.msg').innerHTML=" "
+            let chat=data.Message
+            let html=`
+            <div class="current-user-chat">
+                        <h3>${chat}</h3>
+                    </div>
+            `
+            $(".chat-container").append(html)
+            socket.emit('newchat',data)
+        })
+    })
+
+    socket.on("loadnewchat",function(data){
+        console.log("data",data);
+
+        if(sender_id==data.Receiver_id&& receiver_id==data.Sender_id){
+
+            let html=`
+            <div class="dynemic-user-chat">
+                            <h3>${data.Message}</h3>
+                        </div>
+            `
+            $(".chat-container").append(html)
+        }
+
+    })
+   
+    socket.on("loadchats",function(data){
+        $('.chat-container').html('')
+        let chat=data.chat
+        let html=' '
+        for(let x=0;x<chat.length;x++){
+            let addClass=' '
+            if(chat[x]['Sender_id']==sender_id){
+                addClass='current-user-chat'
+            }
+            else{
+                addClass='dynemic-user-chat'
+            }
+            html+=`
+            <div class='`+addClass+`'>
+                            <h3>`+chat[x]['Message']+`</h3>
+                        </div>
+            `
+        }
+        $(".chat-container").append(html)
+    })
+   </script>
+  </body>
+</html>
